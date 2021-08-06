@@ -1,2 +1,2 @@
 # BMS_Test
-Repo in support of Bristol-Myers Squibb Test Ansible Playbooks
+Test repo in support of Bristol-Myers Squibb Ansible Playbooks
