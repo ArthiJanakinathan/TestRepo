@@ -1,0 +1,49 @@
+#=============================================================================
+#
+# uptime_report.yml
+#
+# 2020-07-30 1.0.0 Sathiya Mohan G <sathiyamohan.g@dxc.com>
+#  - Playbook creation
+#  - shell script uptime.sh
+#
+#=============================================================================
+# Parameters
+# NODE - Target inventory node
+# ---
+# SLAM_TASKNAME: LINUX Server uptime checks
+# SLAM_FACT_SYSTEM: Linux, RedHat, SuSE
+# SLAM_Q: Triage
+# SLAM_DESCRIPTION: This playbook triggers the script to check uptime.
+# ---
+
+---
+- hosts: "{{ NODE }}"
+  vars:
+    script_args: "{{SCRIPT_ARGS | default('') }}"
+
+  tasks:
+  - name: Make receiving folder
+    local_action: file dest={{DESTUNIQDIR}} mode=700 owner={{TRIAGEFILEOWNER}} state=directory
+    run_once: True
+
+  - name: Making Output file
+    local_action: file path="{{DESTUNIQDIR}}/{{ansible_hostname}}_uptime_report.txt" state=touch
+
+  - name: Create local directory to copy the script
+    file: path=/tmp/raffia state=directory mode=0755
+
+  - name: Copying the Script
+    copy: src=files/uptime.sh dest=/tmp/raffia/uptime.sh mode=0700
+
+  - name: Script Execution
+    command: bash /tmp/raffia/uptime.sh {{script_args}}
+    register: output
+
+  - name: Removing copied scripts
+    file: path=/tmp/raffia/uptime.sh state=absent
+
+  - name: Redirecting the output
+    lineinfile:
+      dest: "{{DESTUNIQDIR}}/{{ansible_hostname}}_uptime_report.txt"
+      line: "{{ output.stdout }}"
+    delegate_to: localhost
